@@ -1,8 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-//import * as config from "./config.json";
 const http = require("http");
-//import * as jss from "json-stringify-safe";
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
@@ -10,50 +8,50 @@ const formidable = require("formidable");
 const util = require("util");
 const uuid = require("uuid");
 const mkdirp = require("mkdirp");
-let config = JSON.parse(fs.readFileSync("config.json", 'utf8'));
-let meshBase = config.meshBase;
+const config = require("config");
+const database_1 = require("./database");
+let meshBase = config.get('meshBase');
 let u = util.inspect;
+let db = new database_1.DBIO();
 let server = http.createServer((req, res) => {
     if (!allowAccess(req)) {
         console.log(`rejected connection`);
         res.end();
     }
     else {
-        console.log(`req method ${req.method}`);
-        //console.log(u(req.headers));
         if (req.method === "POST") {
-            console.log(`loading data...`);
             let form = new formidable.IncomingForm();
             form.maxFileSize = 1024 * 1024 * 500 * 2;
+            let fileName = uuid.v4();
             form.on('fileBegin', (name, file) => {
-                let fileName = uuid.v4();
-                let filePath = path.join(config.imageBase, fileName.substr(0, 2), fileName.substr(2, 2));
+                let filePath = path.join(config.get("imageBase"), fileName.substr(0, 2), fileName.substr(2, 2));
                 if (!fs.existsSync(filePath)) {
                     mkdirp.sync(filePath);
-                    console.log(`created directory ${filePath}`);
                 }
                 file.path = path.join(filePath, fileName);
-                console.log(util.inspect({ what: '_fileBegin_', name: name, filePath: filePath, file: file }));
             });
             form.parse(req, function (err, fields, files) {
                 res.writeHead(200, { 'content-type': 'text/plain' });
                 res.write('received upload:\n\n\n');
-                //console.log(util.inspect({error: err, fields: fields, files: files}));
+                let frame = {
+                    experimentName: fields.experimentName,
+                    directory: fields.directory,
+                    channelNumber: parseInt(fields.channelNumber),
+                    channelName: fields.channelName,
+                    timepoint: parseInt(fields.timepoint),
+                    width: parseInt(fields.width),
+                    height: parseInt(fields.height),
+                    depth: parseInt(fields.depth),
+                    xSize: parseFloat(fields.xScale),
+                    ySize: parseFloat(fields.yScale),
+                    zSize: parseFloat(fields.zScale),
+                    filename: fileName,
+                    msec: parseInt(fields.msec)
+                };
+                db.insertFrame(frame);
+                console.log(`uploaded experiment: ${frame.experimentName} channel: ${frame.channelNumber} frame: ${frame.timepoint}`);
                 res.end();
             });
-            /*
-            let dataBuffer: Buffer[] = [];
-            req.on('data', (chunk: Buffer) => {
-                dataBuffer.push(chunk)
-            }).on('end', () => {
-                let buf = Buffer.concat(dataBuffer);
-                //console.log(`uploaded ${buf.length} bits of data md5: ${md5(buf)}`);
-                fs.writeFileSync("d:\\data\\test.buf", buf);
-                console.log(`wrote ${buf.length} bytes`);
-            })
-            res.writeHead(200, {"Content-Type": "application/x-binary"});
-            res.end();
-            */
         }
         else {
             const fileInfo = getFile(req.url);
@@ -70,7 +68,7 @@ let server = http.createServer((req, res) => {
 });
 server.listen(1337);
 console.log("Phoebe server is listening");
-console.log(`Host: ${os.hostname}\nMesh base: ${meshBase}\nImage base: ${config.imageBase}`);
+console.log(`Host: ${os.hostname}\nMesh base: ${meshBase}\nImage base: ${config.get("imageBase")}`);
 function getFile(url) {
     let mimeType;
     let fileName = url.substr(1);

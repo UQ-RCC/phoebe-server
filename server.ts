@@ -1,6 +1,4 @@
-//import * as config from "./config.json";
 import * as http from "http";
-//import * as jss from "json-stringify-safe";
 import * as path from "path";
 import * as fs from "fs";
 import * as os from "os";
@@ -9,10 +7,14 @@ import * as formidable from "formidable"
 import * as util from "util"
 import * as uuid from "uuid"
 import * as mkdirp from "mkdirp"
+import * as config from "config"
+import * as uuidv4 from "uuid/v4";
 
-let config = JSON.parse(fs.readFileSync("config.json", 'utf8'));
-let meshBase = config.meshBase;
+import {DBIO, ImageFrame} from "./database";
+
+let meshBase = config.get<string>('meshBase');
 let u = util.inspect;
+let db = new DBIO();
 
 let server = http.createServer((req, res) =>
 {
@@ -22,54 +24,45 @@ let server = http.createServer((req, res) =>
         res.end();
     }    
     else
-    {        
-        console.log(`req method ${req.method}`);
-        //console.log(u(req.headers));
-
+    {   
         if (req.method === "POST")
         {
-            console.log(`loading data...`);
-            
-            let form = new formidable.IncomingForm();
-            
+            let form = new formidable.IncomingForm();            
             form.maxFileSize = 1024 * 1024 * 500 * 2;
-
+            let fileName = uuid.v4();
             form.on('fileBegin', (name, file) => {
-                let fileName = uuid.v4();
-                let filePath = path.join(config.imageBase, fileName.substr(0,2), fileName.substr(2,2));
+                let filePath = path.join(config.get("imageBase"), fileName.substr(0,2), fileName.substr(2,2));
                 if(!fs.existsSync(filePath))
                 {
-                    mkdirp.sync(filePath);
-                    console.log(`created directory ${filePath}`);
+                    mkdirp.sync(filePath);                    
                 }
-                file.path = path.join(filePath, fileName);
-                console.log(util.inspect({what: '_fileBegin_', name: name, filePath: filePath, file: file}));
+                file.path = path.join(filePath, fileName);                
             })
             
             form.parse(req, function(err, fields, files) {
                 res.writeHead(200, {'content-type': 'text/plain'});
                 res.write('received upload:\n\n\n');
-
-                //console.log(util.inspect({error: err, fields: fields, files: files}));
-
                 
-
+                let frame: ImageFrame =                
+                {
+                    experimentName: <string>fields.experimentName,
+                    directory: <string>fields.directory,
+                    channelNumber: parseInt(<string>fields.channelNumber),
+                    channelName: <string>fields.channelName,
+                    timepoint: parseInt(<string>fields.timepoint),
+                    width: parseInt(<string>fields.width),
+                    height: parseInt(<string>fields.height),
+                    depth: parseInt(<string>fields.depth),
+                    xSize: parseFloat(<string>fields.xScale),
+                    ySize: parseFloat(<string>fields.yScale),
+                    zSize: parseFloat(<string>fields.zScale),
+                    filename: fileName,
+                    msec: parseInt(<string>fields.msec)
+                };                
+                db.insertFrame(frame);
+                console.log(`uploaded experiment: ${frame.experimentName} channel: ${frame.channelNumber} frame: ${frame.timepoint}`);
                 res.end();
             });
-
-            /*
-            let dataBuffer: Buffer[] = [];
-            req.on('data', (chunk: Buffer) => {
-                dataBuffer.push(chunk)
-            }).on('end', () => {
-                let buf = Buffer.concat(dataBuffer);
-                //console.log(`uploaded ${buf.length} bits of data md5: ${md5(buf)}`);
-                fs.writeFileSync("d:\\data\\test.buf", buf);
-                console.log(`wrote ${buf.length} bytes`);
-            })
-            res.writeHead(200, {"Content-Type": "application/x-binary"});
-            res.end();
-            */
         }
         else
         {
@@ -84,14 +77,13 @@ let server = http.createServer((req, res) =>
                 res.writeHead(404, {"Content-Type": "application/x-binary"});
                 res.end();
             }
-        }
-        
+        }        
     }
 });
 
 server.listen(1337);
 console.log("Phoebe server is listening");
-console.log(`Host: ${os.hostname}\nMesh base: ${meshBase}\nImage base: ${config.imageBase}`);
+console.log(`Host: ${os.hostname}\nMesh base: ${meshBase}\nImage base: ${config.get("imageBase")}`);
 
 function getFile(url: string): { fileStream: fs.ReadStream, mimeType: string, fileName: string } | null
 {
