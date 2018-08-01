@@ -55,8 +55,14 @@ class DBIO {
                 frame.filename,
                 frame.msec
             ], (err, res) => {
-                console.log(`database error`);
-                client.end();
+                if (err) {
+                    console.log(`database error\n ${util.inspect(err)}`);
+                    throw (err);
+                }
+                else {
+                    console.log(`image_prime id\n ${util.inspect(res.rows)}`);
+                }
+                client.release();
             });
         });
     }

@@ -53,7 +53,7 @@ export class DBIO
     }
 
     public insertFrame(frame: ImageFrame)
-    {
+    {        
         this.pool.connect((e, client) =>
         {
             client.query(`select insert_image_prime(
@@ -85,9 +85,17 @@ export class DBIO
                 frame.timepoint,
                 frame.filename,
                 frame.msec
-            ], (err, res) => {                
-                console.log(`database error`);
-                client.end();
+            ], (err, res) => {
+                if (err)
+                {
+                    console.log(`database error\n ${util.inspect(err)}`);
+                    throw(err);
+                }
+                else
+                {
+                    console.log(`image_prime id\n ${util.inspect(res.rows)}`);
+                }
+                client.release();
             })
         });
     }

@@ -36,7 +36,7 @@ let server = http.createServer((req, res) =>
                 {
                     mkdirp.sync(filePath);                    
                 }
-                file.path = path.join(filePath, fileName);                
+                file.path = path.join(filePath, fileName);
             })
             
             form.parse(req, function(err, fields, files) {
