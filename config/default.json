@@ -1,9 +1,9 @@
 {
     "meshBase": "D:/data/light sheet/data",
     "imageBase": "D:/data/light sheet/data-stack",    
-    "database": {
-        "host": "phoebe.rcc.uq.edu.au",
-        "port": 1338,
+    "database": {        
+        "host": "localhost",
+        "port": 5432,
         "user": "phoebeadmin",
         "password": "password",
         "database": "phoebe_dev",

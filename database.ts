@@ -3,6 +3,7 @@ import * as pg from "pg";
 import * as fs from "fs";
 import * as config from "config";
 import * as uuidv4 from "uuid/v4";
+import { resolve } from "path";
 
 export interface ImageFrame{
     experimentName: string,
@@ -26,8 +27,7 @@ export class DBIO
 
     public constructor()
     {
-        let dbparam = config.get<pg.PoolConfig>("database");
-        console.log(util.inspect(dbparam));
+        let dbparam = config.get<pg.PoolConfig>("database");        
         this.pool = new pg.Pool(dbparam);
 
         this.pool.connect((e, client, release) =>
@@ -38,10 +38,10 @@ export class DBIO
             }
             else
             {
-                client.query('select version();')
+                client.query('select * from version();')
                     .then(res =>
-                    {
-                        console.log(util.inspect(res.rows[0]));
+                    {                        
+                        console.log(`connected to Postgres server: ${res.rows[0].version}`);
                         client.release();
                     })
                     .catch(e =>
@@ -52,52 +52,57 @@ export class DBIO
         });
     }
 
-    public insertFrame(frame: ImageFrame)
-    {        
-        this.pool.connect((e, client) =>
+    public insertFrame(frame: ImageFrame): Promise<string>
+    {
+        return new Promise<string>((resolve, reject) =>
         {
-            client.query(`select insert_image_prime(
-                $1::text, 
-                $2::text,
-                $3::integer,
-                $4::integer,
-                $5::integer,
-                $6::double precision,
-                $7::double precision,
-                $8::double precision,
-                $9::integer,
-                $10::text,
-                $11::integer,
-                $12::text,
-                $13::integer
-            )`,
-            [
-                frame.experimentName,
-                frame.directory,
-                frame.width,
-                frame.height,
-                frame.depth,
-                frame.xSize,
-                frame.ySize,
-                frame.zSize,
-                frame.channelNumber,
-                frame.channelName,
-                frame.timepoint,
-                frame.filename,
-                frame.msec
-            ], (err, res) => {
-                if (err)
-                {
-                    console.log(`database error\n ${util.inspect(err)}`);
-                    throw(err);
-                }
-                else
-                {
-                    console.log(`image_prime id\n ${util.inspect(res.rows)}`);
-                }
-                client.release();
-            })
-        });
+            this.pool.connect((e, client) =>
+            {
+                client.query(`select insert_image_prime(
+                    $1::text, 
+                    $2::text,
+                    $3::integer,
+                    $4::integer,
+                    $5::integer,
+                    $6::double precision,
+                    $7::double precision,
+                    $8::double precision,
+                    $9::integer,
+                    $10::text,
+                    $11::integer,
+                    $12::text,
+                    $13::integer
+                )`,
+                [
+                    frame.experimentName,
+                    frame.directory,
+                    frame.width,
+                    frame.height,
+                    frame.depth,
+                    frame.xSize,
+                    frame.ySize,
+                    frame.zSize,
+                    frame.channelNumber,
+                    frame.channelName,
+                    frame.timepoint,
+                    frame.filename,
+                    frame.msec
+                ],
+                (err: Error, res) =>
+                {                    
+                    if (err)
+                    {                        
+                        client.release();
+                        reject(err);
+                    }
+                    else
+                    {                        
+                        client.release();
+                        resolve(res.rows[0]['insert_image_prime']);
+                    }
+                })
+            });
+        })
     }
 
 }

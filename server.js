@@ -13,6 +13,57 @@ const database_1 = require("./database");
 let meshBase = config.get('meshBase');
 let u = util.inspect;
 let db = new database_1.DBIO();
+let server2 = http.createServer((req, res) => {
+    console.log(`${req.method}: ${req.url}`);
+    if (req.method === "POST") {
+        let form = new formidable.IncomingForm();
+        form.maxFileSize = 1024 * 1024 * 500 * 2;
+        let fileName = uuid.v4();
+        form.on('fileBegin', (name, file) => {
+            let filePath = path.join(config.get("imageBase"), fileName.substr(0, 2), fileName.substr(2, 2));
+            if (!fs.existsSync(filePath)) {
+                mkdirp.sync(filePath);
+            }
+            file.path = path.join(filePath, fileName);
+            console.log(`wrote: ${file.path}`);
+        });
+        form.parse(req, (err, fields, files) => {
+            let frame = {
+                experimentName: fields.experimentName,
+                directory: fields.directory,
+                channelNumber: parseInt(fields.channelNumber),
+                channelName: fields.channelName,
+                timepoint: parseInt(fields.sequenceNumber),
+                width: parseInt(fields.width),
+                height: parseInt(fields.height),
+                depth: parseInt(fields.depth),
+                xSize: parseFloat(fields.xScale),
+                ySize: parseFloat(fields.yScale),
+                zSize: parseFloat(fields.zScale),
+                filename: fileName,
+                msec: parseInt(fields.msec)
+            };
+            let filename = files['byte-buffer'].path;
+            db.insertFrame(frame)
+                .then(value => {
+                let uploadState = 'uploaded';
+                if (value === 'duplicate image') {
+                    uploadState = 'skipped (duplicate)';
+                    deleteFile(filename);
+                }
+                console.log(`${uploadState} image: ${frame.experimentName} channel: ${frame.channelNumber} frame: ${frame.timepoint} file: ${filename}`);
+            })
+                .catch(err => {
+                console.log(`database error inserting image: ${frame.experimentName} channel: ${frame.channelNumber} frame: ${frame.timepoint} file: ${filename}`);
+                deleteFile(filename);
+            });
+            res.end();
+        });
+    }
+    else {
+        res.end();
+    }
+});
 let server = http.createServer((req, res) => {
     if (!allowAccess(req)) {
         console.log(`rejected connection`);
@@ -30,7 +81,7 @@ let server = http.createServer((req, res) => {
                 }
                 file.path = path.join(filePath, fileName);
             });
-            form.parse(req, function (err, fields, files) {
+            form.parse(req, (err, fields, files) => {
                 res.writeHead(200, { 'content-type': 'text/plain' });
                 res.write('received upload:\n\n\n');
                 let frame = {
@@ -48,8 +99,20 @@ let server = http.createServer((req, res) => {
                     filename: fileName,
                     msec: parseInt(fields.msec)
                 };
-                db.insertFrame(frame);
-                console.log(`uploaded experiment: ${frame.experimentName} channel: ${frame.channelNumber} frame: ${frame.timepoint}`);
+                let filename = files['byte-buffer'].path;
+                db.insertFrame(frame)
+                    .then(value => {
+                    let uploadState = 'uploaded';
+                    if (value === 'duplicate image') {
+                        uploadState = 'skipped (duplicate)';
+                        deleteFile(filename);
+                    }
+                    console.log(`${uploadState} image: ${frame.experimentName} channel: ${frame.channelNumber} frame: ${frame.timepoint} file: ${filename}`);
+                })
+                    .catch(err => {
+                    console.log(`database error inserting image: ${frame.experimentName} channel: ${frame.channelNumber} frame: ${frame.timepoint} file: ${filename}`);
+                    deleteFile(filename);
+                });
                 res.end();
             });
         }
@@ -66,7 +129,14 @@ let server = http.createServer((req, res) => {
         }
     }
 });
-server.listen(1337);
+function deleteFile(filename) {
+    fs.unlink(filename, (err) => {
+        if (err) {
+            console.log(`error deleting duplicate image file ${filename}`);
+        }
+    });
+}
+server2.listen(1337);
 console.log("Phoebe server is listening");
 console.log(`Host: ${os.hostname}\nMesh base: ${meshBase}\nImage base: ${config.get("imageBase")}`);
 function getFile(url) {
