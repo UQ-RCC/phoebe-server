@@ -16,22 +16,22 @@
     "@types/config": "0.0.34",
     "@types/formidable": "^1.0.31",
     "@types/json-stringify-safe": "5.0.0",
-    "@types/md5": "^2.1.32",
+    "@types/md5": "^2.1.33",
     "@types/mkdirp": "^0.5.2",
-    "@types/pg": "^6.1.43",
-    "@types/uuid": "^3.4.3",
-    "config": "^1.30.0",
+    "@types/pg": "^6.1.47",
+    "@types/uuid": "^3.4.4",
+    "config": "^1.31.0",
     "formidable": "^1.2.1",
     "json-stringify-safe": "5.0.1",
     "md5": "^2.2.1",
     "mkdirp": "^0.5.1",
     "moment": "^2.22.2",
-    "pg": "^7.3.0",
-    "uuid": "^3.2.1"
+    "pg": "^7.5.0",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "ts-loader": "^2.3.4",
-    "typescript": "^2.5.3",
+    "ts-loader": "^2.3.7",
+    "typescript": "^3.1.1",
     "webpack": "3.5.5"
   }
 }
