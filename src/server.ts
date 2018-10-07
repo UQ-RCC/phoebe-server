@@ -2,7 +2,6 @@ import * as http from "http";
 import * as path from "path";
 import * as fs from "fs";
 import * as os from "os";
-import * as md5 from "md5";
 import * as formidable from "formidable"
 import * as util from "util"
 import * as uuid from "uuid"
@@ -169,8 +168,9 @@ function deleteFile(filename: string): void
     });
 }
 
-server2.listen(1337);
-console.log("Phoebe server is listening");
+let port = config.get<number>('port');
+server2.listen(port);
+console.log(`Phoebe server is listening on ${port}`);
 console.log(`Host: ${os.hostname}\nMesh base: ${meshBase}\nImage base: ${config.get("imageBase")}`);
 
 function getFile(url: string): { fileStream: fs.ReadStream, mimeType: string, fileName: string } | null

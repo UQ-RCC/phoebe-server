@@ -1,9 +1,6 @@
 import * as util from "util";
 import * as pg from "pg";
-import * as fs from "fs";
 import * as config from "config";
-import * as uuidv4 from "uuid/v4";
-import { resolve } from "path";
 
 export interface ImageFrame{
     experimentName: string,
@@ -27,7 +24,7 @@ export class DBIO
 
     public constructor()
     {
-        let dbparam = config.get<pg.PoolConfig>("database");        
+        let dbparam = config.get<pg.PoolConfig>("database");  
         this.pool = new pg.Pool(dbparam);
 
         this.pool.connect((e, client, release) =>
