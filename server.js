@@ -136,7 +136,7 @@ function deleteFile(filename) {
         }
     });
 }
-server2.listen(1337);
+server2.listen(80);
 console.log("Phoebe server is listening");
 console.log(`Host: ${os.hostname}\nMesh base: ${meshBase}\nImage base: ${config.get("imageBase")}`);
 function getFile(url) {
