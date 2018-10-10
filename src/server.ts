@@ -7,7 +7,6 @@ import * as util from "util"
 import * as uuid from "uuid"
 import * as mkdirp from "mkdirp"
 import * as config from "config"
-import * as uuidv4 from "uuid/v4";
 
 import {DBIO, ImageFrame} from "./database";
 
