@@ -10,11 +10,11 @@ const uuid = require("uuid");
 const mkdirp = require("mkdirp");
 const config = require("config");
 const database_1 = require("./database");
-let meshBase = config.get('meshBase');
+let derivedBase = config.get('derivedBase');
 let u = util.inspect;
 let db = new database_1.DBIO();
 let server2 = http.createServer((req, res) => {
-    console.log(`${req.method}: ${req.url}`);
+    console.log(`${os.hostname} : ${req.method}: ${req.connection.remoteAddress} : ${req.url}`);
     if (req.method === "POST") {
         let form = new formidable.IncomingForm();
         form.maxFileSize = 1024 * 1024 * 500 * 2;
@@ -25,7 +25,7 @@ let server2 = http.createServer((req, res) => {
                 mkdirp.sync(filePath);
             }
             file.path = path.join(filePath, fileName);
-            console.log(`wrote: ${file.path}`);
+            console.log(`${os.hostname} : wrote: ${file.path}`);
         });
         form.parse(req, (err, fields, files) => {
             let frame = {
@@ -51,17 +51,17 @@ let server2 = http.createServer((req, res) => {
                     uploadState = 'skipped (duplicate)';
                     deleteFile(filename);
                 }
-                console.log(`${uploadState} image: ${frame.experimentName} channel: ${frame.channelNumber} frame: ${frame.timepoint} file: ${filename}`);
+                console.log(`${os.hostname} : ${uploadState} image: ${frame.experimentName} channel: ${frame.channelNumber} frame: ${frame.timepoint} file: ${filename}`);
             })
                 .catch(err => {
-                console.log(`database error inserting image: ${frame.experimentName} channel: ${frame.channelNumber} frame: ${frame.timepoint} file: ${filename}`);
+                console.log(`${os.hostname} : database error inserting image: ${frame.experimentName} channel: ${frame.channelNumber} frame: ${frame.timepoint} file: ${filename}`);
                 deleteFile(filename);
             });
-            res.end();
+            res.end(`POST from ${os.hostname}`);
         });
     }
     else {
-        res.end();
+        res.end(`GET from ${os.hostname}`);
     }
 });
 let server = http.createServer((req, res) => {
@@ -139,12 +139,12 @@ function deleteFile(filename) {
 let port = config.get('port');
 server2.listen(port);
 console.log(`Phoebe server is listening on ${port}`);
-console.log(`Host: ${os.hostname}\nMesh base: ${meshBase}\nImage base: ${config.get("imageBase")}`);
+console.log(`Host: ${os.hostname}\nPrime base: ${config.get("primeBase")}\nDerived base: ${derivedBase}`);
 function getFile(url) {
     let mimeType;
     let fileName = url.substr(1);
     console.log(`looking for ${fileName}`);
-    fileName = path.join(meshBase, fileName.substr(0, 2), fileName.substr(2, 2), url);
+    fileName = path.join(derivedBase, fileName.substr(0, 2), fileName.substr(2, 2), url);
     mimeType = "application/x-binary";
     if (fs.existsSync(fileName)) {
         const fileStream = fs.createReadStream(fileName);

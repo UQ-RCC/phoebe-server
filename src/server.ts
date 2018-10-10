@@ -8,6 +8,7 @@ import * as uuid from "uuid"
 import * as mkdirp from "mkdirp"
 import * as config from "config"
 
+
 import {DBIO, ImageFrame} from "./database";
 
 let derivedBase = config.get<string>('derivedBase');
@@ -16,7 +17,7 @@ let db = new DBIO();
 
 let server2 = http.createServer((req, res) =>
 {
-    console.log(`${req.method}: ${req.url}`);
+    console.log(`${os.hostname} : ${req.method}: ${req.connection.remoteAddress} : ${req.url}`);
     if (req.method === "POST")
     {
         let form = new formidable.IncomingForm();
@@ -31,7 +32,7 @@ let server2 = http.createServer((req, res) =>
                 mkdirp.sync(filePath);                    
             }
             file.path = path.join(filePath, fileName);
-            console.log(`wrote: ${file.path}`);
+            console.log(`${os.hostname} : wrote: ${file.path}`);
         })
 
         form.parse(req, (err, fields: formidable.Fields, files: formidable.Files) =>
@@ -62,18 +63,18 @@ let server2 = http.createServer((req, res) =>
                         uploadState = 'skipped (duplicate)'            
                         deleteFile(filename);
                     }
-                    console.log(`${uploadState} image: ${frame.experimentName} channel: ${frame.channelNumber} frame: ${frame.timepoint} file: ${filename}`);
+                    console.log(`${os.hostname} : ${uploadState} image: ${frame.experimentName} channel: ${frame.channelNumber} frame: ${frame.timepoint} file: ${filename}`);
                 })
                 .catch(err => {                        
-                    console.log(`database error inserting image: ${frame.experimentName} channel: ${frame.channelNumber} frame: ${frame.timepoint} file: ${filename}`);
+                    console.log(`${os.hostname} : database error inserting image: ${frame.experimentName} channel: ${frame.channelNumber} frame: ${frame.timepoint} file: ${filename}`);
                     deleteFile(filename);
                 });
-            res.end();
+            res.end(`POST from ${os.hostname}`);
         })
     }
     else
     {
-        res.end();
+        res.end(`GET from ${os.hostname}`);
     }
     
 });
