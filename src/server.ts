@@ -10,7 +10,7 @@ import * as config from "config"
 
 import {DBIO, ImageFrame} from "./database";
 
-let meshBase = config.get<string>('meshBase');
+let derivedBase = config.get<string>('derivedBase');
 let u = util.inspect;
 let db = new DBIO();
 
@@ -170,14 +170,14 @@ function deleteFile(filename: string): void
 let port = config.get<number>('port');
 server2.listen(port);
 console.log(`Phoebe server is listening on ${port}`);
-console.log(`Host: ${os.hostname}\nMesh base: ${meshBase}\nImage base: ${config.get("imageBase")}`);
+console.log(`Host: ${os.hostname}\nPrime base: ${config.get("primeBase")}\nDerived base: ${derivedBase}`);
 
 function getFile(url: string): { fileStream: fs.ReadStream, mimeType: string, fileName: string } | null
 {
     let mimeType: string;
     let fileName: string = url.substr(1);
     console.log(`looking for ${fileName}`);
-    fileName = path.join(meshBase, fileName.substr(0,2), fileName.substr(2,2), url);    
+    fileName = path.join(derivedBase, fileName.substr(0,2), fileName.substr(2,2), url);    
     mimeType = "application/x-binary";
     if (fs.existsSync(fileName))
     {
