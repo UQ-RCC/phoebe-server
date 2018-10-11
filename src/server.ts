@@ -69,12 +69,24 @@ let server2 = http.createServer((req, res) =>
                     console.log(`${os.hostname} : database error inserting image: ${frame.experimentName} channel: ${frame.channelNumber} frame: ${frame.timepoint} file: ${filename}`);
                     deleteFile(filename);
                 });
-            res.end(`POST from ${os.hostname}`);
+            res.end(`POST from ${os.hostname}\n${util.inspect(fields)}`);
         })
     }
     else
     {
-        res.end(`GET from ${os.hostname}`);
+        let form = new formidable.IncomingForm();
+        if (form)   
+        {
+
+            form.parse(req, (err, fields: formidable.Fields, files: formidable.Files) =>
+            {
+                res.end(`**GET from ${os.hostname}\n${util.inspect(fields)}`);
+            }); 
+        }
+        else
+        {
+            res.end(`**GET from ${os.hostname}\nNo form`);
+        }
     }
     
 });
