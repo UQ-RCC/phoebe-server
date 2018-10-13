@@ -2,7 +2,8 @@ import * as util from "util";
 import * as pg from "pg";
 import * as config from "config";
 
-export interface ImageFrame{
+export interface ImageFrame
+{
     experimentName: string,
     directory: string,
     channelNumber: number,
@@ -15,6 +16,27 @@ export interface ImageFrame{
     xSize: number,
     ySize: number,
     zSize: number,
+    filename: string
+}
+
+ /*
+    in v_owner text,
+    in v_folder text,
+    in v_experiment_name text,
+    in v_channel_number integer,
+    in v_channel_name text,
+    in v_seq_number integer,
+    in v_filename text
+*/
+
+export interface FileLink
+{
+    owner: string,
+    folder: string,
+    experimentName: string,
+    channelNumber: number,
+    channelName: string,
+    seqNumber: number,
     filename: string
 }
 
@@ -101,5 +123,51 @@ export class DBIO
             });
         })
     }
+
+    public registerFile(fileLink: FileLink)
+    {
+        this.pool.connect((e, client) =>
+        {
+            client.query(`select register_file(
+                $1::text, 
+                $2::text,
+                $3::text,
+                $4::integer,
+                $5::text,
+                $6::integer,
+                $7::text)`,
+            [
+                fileLink.owner,
+                fileLink.folder,
+                fileLink.experimentName,
+                fileLink.channelNumber,
+                fileLink.channelName,
+                fileLink.seqNumber,
+                `hello`
+            ],
+            (err: Error, res) =>
+            {                    
+                if (err)
+                {                        
+                    client.release();                    
+                }
+                else
+                {                        
+                    client.release();                    
+                }
+            })
+        });
+    }
+
+    /*
+    in v_owner text,
+    in v_folder text,
+    in v_experiment_name text,
+    in v_channel_number integer,
+    in v_channel_name text,
+    in v_seq_number integer,
+    in v_filename text
+    */
+
 
 }

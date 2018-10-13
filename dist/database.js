@@ -67,6 +67,33 @@ class DBIO {
             });
         });
     }
+    registerFile(fileLink) {
+        this.pool.connect((e, client) => {
+            client.query(`select register_file(
+                $1::text, 
+                $2::text,
+                $3::text,
+                $4::integer,
+                $5::text,
+                $6::integer,
+                $7::text)`, [
+                fileLink.owner,
+                fileLink.folder,
+                fileLink.experimentName,
+                fileLink.channelNumber,
+                fileLink.channelName,
+                fileLink.seqNumber,
+                `hello`
+            ], (err, res) => {
+                if (err) {
+                    client.release();
+                }
+                else {
+                    client.release();
+                }
+            });
+        });
+    }
 }
 exports.DBIO = DBIO;
 //# sourceMappingURL=database.js.map

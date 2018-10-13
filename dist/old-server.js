@@ -1,4 +1,4 @@
-
+"use strict";
 /*
 let server = http.createServer((req, res) =>
 {
@@ -8,7 +8,7 @@ let server = http.createServer((req, res) =>
         res.end();
     }
     else
-    {   
+    {
         if (req.method === "POST")
         {
             let form = new formidable.IncomingForm();
@@ -19,15 +19,15 @@ let server = http.createServer((req, res) =>
                 let filePath = path.join(config.get("imageBase"), fileName.substr(0,2), fileName.substr(2,2));
                 if(!fs.existsSync(filePath))
                 {
-                    mkdirp.sync(filePath);                    
+                    mkdirp.sync(filePath);
                 }
-                file.path = path.join(filePath, fileName);                
+                file.path = path.join(filePath, fileName);
             })
 
             form.parse(req, (err, fields: formidable.Fields, files: formidable.Files) => {
                 res.writeHead(200, {'content-type': 'text/plain'});
-                res.write('received upload:\n\n\n');                
-                let frame: ImageFrame =                
+                res.write('received upload:\n\n\n');
+                let frame: ImageFrame =
                 {
                     experimentName: <string>fields.experimentName,
                     directory: <string>fields.directory,
@@ -49,12 +49,12 @@ let server = http.createServer((req, res) =>
                         let uploadState: string = 'uploaded';
                         if (value === 'duplicate image')
                         {
-                            uploadState = 'skipped (duplicate)'                            
+                            uploadState = 'skipped (duplicate)'
                             deleteFile(filename);
                         }
                         console.log(`${uploadState} image: ${frame.experimentName} channel: ${frame.channelNumber} frame: ${frame.timepoint} file: ${filename}`);
                     })
-                    .catch(err => {                        
+                    .catch(err => {
                         console.log(`database error inserting image: ${frame.experimentName} channel: ${frame.channelNumber} frame: ${frame.timepoint} file: ${filename}`);
                         deleteFile(filename);
                     });
@@ -67,7 +67,7 @@ let server = http.createServer((req, res) =>
             const fileInfo = getFile(req.url as string);
             if (fileInfo)
             {
-                res.writeHead(200, {"Content-Type": fileInfo.mimeType});            
+                res.writeHead(200, {"Content-Type": fileInfo.mimeType});
                 fileInfo.fileStream.pipe(res);
             }
             else
@@ -75,12 +75,10 @@ let server = http.createServer((req, res) =>
                 res.writeHead(404, {"Content-Type": "application/x-binary"});
                 res.end();
             }
-        }        
+        }
     }
 });
 */
-
-
 /*
 let server2 = http.createServer((req, res) =>
 {
@@ -96,15 +94,15 @@ let server2 = http.createServer((req, res) =>
             let filePath = path.join(config.get("imageBase"), fileName.substr(0,2), fileName.substr(2,2));
             if(!fs.existsSync(filePath))
             {
-                mkdirp.sync(filePath);                    
+                mkdirp.sync(filePath);
             }
             file.path = path.join(filePath, fileName);
             console.log(`${os.hostname} : wrote: ${file.path}`);
         })
 
         form.parse(req, (err, fields: formidable.Fields, files: formidable.Files) =>
-        {            
-            let frame: ImageFrame =                
+        {
+            let frame: ImageFrame =
             {
                 experimentName: <string>fields.experimentName,
                 directory: <string>fields.directory,
@@ -127,12 +125,12 @@ let server2 = http.createServer((req, res) =>
                     let uploadState: string = 'uploaded';
                     if (value === 'duplicate image')
                     {
-                        uploadState = 'skipped (duplicate)'            
+                        uploadState = 'skipped (duplicate)'
                         deleteFile(filename);
                     }
                     console.log(`${os.hostname} : ${uploadState} image: ${frame.experimentName} channel: ${frame.channelNumber} frame: ${frame.timepoint} file: ${filename}`);
                 })
-                .catch(err => {                        
+                .catch(err => {
                     console.log(`${os.hostname} : database error inserting image: ${frame.experimentName} channel: ${frame.channelNumber} frame: ${frame.timepoint} file: ${filename}`);
                     deleteFile(filename);
                 });
@@ -142,13 +140,13 @@ let server2 = http.createServer((req, res) =>
     else
     {
         let form = new formidable.IncomingForm();
-        if (form)   
+        if (form)
         {
 
             form.parse(req, (err, fields: formidable.Fields, files: formidable.Files) =>
             {
                 res.end(`**GET from ${os.hostname}\n${util.inspect(fields)}`);
-            }); 
+            });
         }
         else
         {
@@ -174,3 +172,4 @@ console.log(`Phoebe server is listening on ${port}`);
 console.log(`Host: ${os.hostname}\nPrime base: ${config.get("primeBase")}\nDerived base: ${derivedBase}`);
 
 */
+//# sourceMappingURL=old-server.js.map
