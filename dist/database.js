@@ -83,7 +83,7 @@ class DBIO {
                 fileLink.channelNumber,
                 fileLink.channelName,
                 fileLink.seqNumber,
-                `hello`
+                fileLink.detail
             ], (err, res) => {
                 if (err) {
                     client.release();
@@ -91,6 +91,23 @@ class DBIO {
                 else {
                     client.release();
                 }
+            });
+        });
+    }
+    nextJob() {
+        return new Promise((resolve, reject) => {
+            this.pool.connect((e, client) => {
+                client.query(`select next_job($1::text)`, ['foo'], (e, res) => {
+                    if (e) {
+                        client.release();
+                        reject(e);
+                    }
+                    else {
+                        console.log(res.rows[0]);
+                        resolve(res.rows[0]['next_job']);
+                        client.release();
+                    }
+                });
             });
         });
     }

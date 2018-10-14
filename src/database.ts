@@ -37,7 +37,7 @@ export interface FileLink
     channelNumber: number,
     channelName: string,
     seqNumber: number,
-    filename: string
+    detail: string
 }
 
 export class DBIO
@@ -143,7 +143,7 @@ export class DBIO
                 fileLink.channelNumber,
                 fileLink.channelName,
                 fileLink.seqNumber,
-                `hello`
+                fileLink.detail
             ],
             (err: Error, res) =>
             {                    
@@ -157,6 +157,33 @@ export class DBIO
                 }
             })
         });
+    }
+
+    public nextJob(): Promise<string>
+    {
+        return new Promise<string>((resolve, reject) =>
+        {
+            this.pool.connect((e, client) =>
+            {
+                client.query(`select next_job($1::text)`, ['foo'],
+                (e: Error, res: pg.QueryResult) =>
+                {
+                    if (e)      
+                    {
+                        client.release();
+                        reject(e);
+                    }
+                    else
+                    {
+                        console.log(res.rows[0]);
+                        resolve(res.rows[0]['next_job']);
+                        client.release();
+                    }
+                });
+            });
+
+        });
+        
     }
 
     /*

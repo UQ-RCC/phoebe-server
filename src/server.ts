@@ -43,8 +43,7 @@ class PhoebeServer
     constructor()
     {
         this.server = http.createServer((req, res) =>
-        {
-            console.log(`incoming ${req.method} ${req.connection.remoteAddress} ${req.url}`);
+        {            
             if (req.method === "GET")
             {
                 this.get(req, res)
@@ -65,7 +64,10 @@ class PhoebeServer
 
     private get(req: http.IncomingMessage, res: http.ServerResponse): void
     {
-        res.end(`got '${req.url}' from ${os.hostname}`);
+        //res.end(`got '${req.url}' from ${os.hostname}`);
+        let form = new formidable.IncomingForm(); // hack
+        form.maxFileSize = 1024 * 1024 * 500 * 2;
+        form.parse(req, this.getParser(req, res));
     }
 
     private post(req: http.IncomingMessage, res: http.ServerResponse): void
@@ -84,8 +86,7 @@ class PhoebeServer
     {
         let url = req.url as string;        
         if (url.startsWith('/register-file'))
-        {
-            console.log(`going into formidable`);
+        {            
             return (err, fields: formidable.Fields, files: formidable.Files) =>
             {
                 let fileLink: FileLink =
@@ -96,13 +97,27 @@ class PhoebeServer
                     channelNumber: parseInt(<string>fields.channelNumber),
                     channelName: <string>fields.channelName,
                     seqNumber: parseInt(<string>fields.seqNumber),
-                    filename: <string>fields.filename
+                    detail: <string>fields.detail
                 };
-                console.log(`sending ${util.inspect(fields)}`);
+                console.log(`sending ${fileLink.detail}\n${fileLink.experimentName}/${fileLink.channelNumber}/${fileLink.seqNumber}`);
                 db.registerFile(fileLink);                
                 res.writeHead(200, {'content-type': 'text/plain'});
-                res.end();                
+                res.end();
             };
+        }
+        if (url.startsWith('/next-job'))
+        {            
+            return (err, fields: formidable.Fields, files: formidable.Files) =>
+            {
+                db.nextJob()
+                .then(json => {
+                    console.log(`resolved: ${JSON.stringify(json)}`);
+                    res.end(`${JSON.stringify(json)}`);
+                })
+                .catch(() =>{
+                    res.end();
+                });
+            }
         }
         else
         {

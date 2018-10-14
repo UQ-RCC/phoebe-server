@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const http = require("http");
 const path = require("path");
 const fs = require("fs");
-const os = require("os");
 const formidable = require("formidable");
 const util = require("util");
 const config = require("config");
@@ -30,7 +29,6 @@ function getFile(url) {
 class PhoebeServer {
     constructor() {
         this.server = http.createServer((req, res) => {
-            console.log(`incoming ${req.method} ${req.connection.remoteAddress} ${req.url}`);
             if (req.method === "GET") {
                 this.get(req, res);
             }
@@ -46,7 +44,10 @@ class PhoebeServer {
         console.log(`Neo Phoebe server is listening on ${port}`);
     }
     get(req, res) {
-        res.end(`got '${req.url}' from ${os.hostname}`);
+        //res.end(`got '${req.url}' from ${os.hostname}`);
+        let form = new formidable.IncomingForm(); // hack
+        form.maxFileSize = 1024 * 1024 * 500 * 2;
+        form.parse(req, this.getParser(req, res));
     }
     post(req, res) {
         let form = new formidable.IncomingForm();
@@ -59,7 +60,6 @@ class PhoebeServer {
     getParser(req, res) {
         let url = req.url;
         if (url.startsWith('/register-file')) {
-            console.log(`going into formidable`);
             return (err, fields, files) => {
                 let fileLink = {
                     owner: fields.owner,
@@ -68,12 +68,24 @@ class PhoebeServer {
                     channelNumber: parseInt(fields.channelNumber),
                     channelName: fields.channelName,
                     seqNumber: parseInt(fields.seqNumber),
-                    filename: fields.filename
+                    detail: fields.detail
                 };
-                console.log(`sending ${util.inspect(fields)}`);
+                console.log(`sending ${fileLink.detail}\n${fileLink.experimentName}/${fileLink.channelNumber}/${fileLink.seqNumber}`);
                 db.registerFile(fileLink);
                 res.writeHead(200, { 'content-type': 'text/plain' });
                 res.end();
+            };
+        }
+        if (url.startsWith('/next-job')) {
+            return (err, fields, files) => {
+                db.nextJob()
+                    .then(json => {
+                    console.log(`resolved: ${JSON.stringify(json)}`);
+                    res.end(`${JSON.stringify(json)}`);
+                })
+                    .catch(() => {
+                    res.end();
+                });
             };
         }
         else {
