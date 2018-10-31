@@ -94,6 +94,16 @@ class DBIO {
             });
         });
     }
+    insertFileLink(fileLink) {
+        this.pool.connect((e, client) => {
+            client.query(`select insert_file_link($1::text)`, [fileLink], (err) => {
+                if (err) {
+                    console.log(`${err}`);
+                }
+                client.release();
+            });
+        });
+    }
     nextJob() {
         return new Promise((resolve, reject) => {
             this.pool.connect((e, client) => {

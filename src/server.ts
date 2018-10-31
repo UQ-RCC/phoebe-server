@@ -84,8 +84,19 @@ class PhoebeServer
 
     private getParser(req: http.IncomingMessage, res: http.ServerResponse): (err: any, fields: formidable.Fields, files: formidable.Files) => void
     {
-        let url = req.url as string;        
+        let url = req.url as string;
         if (url.startsWith('/register-file'))
+        {            
+            return (err, fields: formidable.Fields, files: formidable.Files) =>
+            {
+                let fileLink = <string>fields.filePath;                
+                console.log(`sending ${fileLink}`);
+                db.insertFileLink(fileLink);                
+                res.writeHead(200, {'content-type': 'text/plain'});
+                res.end();
+            };
+        }
+        else if (url.startsWith('/register-file-big'))
         {            
             return (err, fields: formidable.Fields, files: formidable.Files) =>
             {
@@ -105,7 +116,7 @@ class PhoebeServer
                 res.end();
             };
         }
-        if (url.startsWith('/next-job'))
+        else if (url.startsWith('/next-job'))
         {            
             return (err, fields: formidable.Fields, files: formidable.Files) =>
             {

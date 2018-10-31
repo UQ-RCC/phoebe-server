@@ -159,6 +159,21 @@ export class DBIO
         });
     }
 
+    public insertFileLink(fileLink: string)
+    {
+        this.pool.connect((e, client) =>
+        {
+            client.query(`select insert_file_link($1::text)`, [fileLink],
+            (err: Error) => {
+                if(err)
+                {
+                    console.log(`${err}`);
+                }
+                client.release()
+            });
+        });
+    }
+
     public nextJob(): Promise<string>
     {
         return new Promise<string>((resolve, reject) =>
@@ -178,7 +193,7 @@ export class DBIO
                         console.log(res.rows[0]);
                         resolve(res.rows[0]['next_job']);
                         client.release();
-                    }
+                    } 
                 });
             });
 
