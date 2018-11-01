@@ -159,11 +159,11 @@ export class DBIO
         });
     }
 
-    public insertFileLink(fileLink: string)
+    public insertFileLink(fileLink: string, detail: string)
     {
         this.pool.connect((e, client) =>
         {
-            client.query(`select insert_file_link($1::text)`, [fileLink],
+            client.query(`select insert_file_link($1::text, $2::jsonb)`, [fileLink, detail],
             (err: Error) => {
                 if(err)
                 {

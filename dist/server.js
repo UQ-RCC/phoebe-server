@@ -62,8 +62,9 @@ class PhoebeServer {
         if (url.startsWith('/register-file')) {
             return (err, fields, files) => {
                 let fileLink = fields.filePath;
+                let detail = fields.detail;
                 console.log(`sending ${fileLink}`);
-                db.insertFileLink(fileLink);
+                db.insertFileLink(fileLink, detail);
                 res.writeHead(200, { 'content-type': 'text/plain' });
                 res.end();
             };

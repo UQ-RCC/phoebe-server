@@ -94,9 +94,9 @@ class DBIO {
             });
         });
     }
-    insertFileLink(fileLink) {
+    insertFileLink(fileLink, detail) {
         this.pool.connect((e, client) => {
-            client.query(`select insert_file_link($1::text)`, [fileLink], (err) => {
+            client.query(`select insert_file_link($1::text, $2::jsonb)`, [fileLink, detail], (err) => {
                 if (err) {
                     console.log(`${err}`);
                 }

@@ -89,9 +89,10 @@ class PhoebeServer
         {            
             return (err, fields: formidable.Fields, files: formidable.Files) =>
             {
-                let fileLink = <string>fields.filePath;                
+                let fileLink = <string>fields.filePath;
+                let detail = <string>fields.detail;         
                 console.log(`sending ${fileLink}`);
-                db.insertFileLink(fileLink);                
+                db.insertFileLink(fileLink, detail);                
                 res.writeHead(200, {'content-type': 'text/plain'});
                 res.end();
             };
