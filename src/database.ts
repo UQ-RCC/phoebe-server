@@ -19,16 +19,6 @@ export interface ImageFrame
     filename: string
 }
 
- /*
-    in v_owner text,
-    in v_folder text,
-    in v_experiment_name text,
-    in v_channel_number integer,
-    in v_channel_name text,
-    in v_seq_number integer,
-    in v_filename text
-*/
-
 export interface FileLink
 {
     owner: string,
@@ -43,12 +33,15 @@ export interface FileLink
 export class DBIO
 {
     private pool: pg.Pool;
+    
+    
 
     public constructor()
     {
-        let dbparam = config.get<pg.PoolConfig>("database");  
+        let dbparam = config.get<pg.PoolConfig>("database");        
+        
+        
         this.pool = new pg.Pool(dbparam);
-
         this.pool.connect((e, client, release) =>
         {
             if (e)
@@ -159,19 +152,17 @@ export class DBIO
         });
     }
 
-    public insertFileLink(fileLink: string, detail: string)
+    public insertFileLink(fileLink: string, detail: string | null = null)
     {
-        this.pool.connect((e, client) =>
-        {
-            client.query(`select insert_file_link($1::text, $2::jsonb)`, [fileLink, detail],
-            (err: Error) => {
-                if(err)
-                {
-                    console.log(`${err}`);
-                }
-                client.release()
-            });
-        });
+        let insertFileReference: pg.QueryConfig = {
+            text: "select insert_file_link($1::text, $2::jsonb)",
+            values: [fileLink, detail]
+        }
+        
+        this.pool.query(insertFileReference)
+            .catch(e => console.log(`${e}`)
+        );
+       
     }
 
     public nextJob(): Promise<string>
@@ -200,16 +191,5 @@ export class DBIO
         });
         
     }
-
-    /*
-    in v_owner text,
-    in v_folder text,
-    in v_experiment_name text,
-    in v_channel_number integer,
-    in v_channel_name text,
-    in v_seq_number integer,
-    in v_filename text
-    */
-
 
 }

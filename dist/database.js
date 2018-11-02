@@ -94,15 +94,13 @@ class DBIO {
             });
         });
     }
-    insertFileLink(fileLink, detail) {
-        this.pool.connect((e, client) => {
-            client.query(`select insert_file_link($1::text, $2::jsonb)`, [fileLink, detail], (err) => {
-                if (err) {
-                    console.log(`${err}`);
-                }
-                client.release();
-            });
-        });
+    insertFileLink(fileLink, detail = null) {
+        let insertFileReference = {
+            text: "select insert_file_link($1::text, $2::jsonb)",
+            values: [fileLink, detail]
+        };
+        this.pool.query(insertFileReference)
+            .catch(e => console.log(`${e}`));
     }
     nextJob() {
         return new Promise((resolve, reject) => {

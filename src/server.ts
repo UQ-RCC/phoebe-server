@@ -91,32 +91,11 @@ class PhoebeServer
             {
                 let fileLink = <string>fields.filePath;
                 let detail = <string>fields.detail;         
-                console.log(`sending ${fileLink}`);
                 db.insertFileLink(fileLink, detail);                
                 res.writeHead(200, {'content-type': 'text/plain'});
                 res.end();
             };
-        }
-        else if (url.startsWith('/register-file-big'))
-        {            
-            return (err, fields: formidable.Fields, files: formidable.Files) =>
-            {
-                let fileLink: FileLink =
-                {             
-                    owner: <string>fields.owner,
-                    folder: <string>fields.folder,
-                    experimentName: <string>fields.experimentName,
-                    channelNumber: parseInt(<string>fields.channelNumber),
-                    channelName: <string>fields.channelName,
-                    seqNumber: parseInt(<string>fields.seqNumber),
-                    detail: <string>fields.detail
-                };
-                console.log(`sending ${fileLink.detail}\n${fileLink.experimentName}/${fileLink.channelNumber}/${fileLink.seqNumber}`);
-                db.registerFile(fileLink);                
-                res.writeHead(200, {'content-type': 'text/plain'});
-                res.end();
-            };
-        }
+        }        
         else if (url.startsWith('/next-job'))
         {            
             return (err, fields: formidable.Fields, files: formidable.Files) =>

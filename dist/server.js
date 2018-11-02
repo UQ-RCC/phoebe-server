@@ -63,25 +63,7 @@ class PhoebeServer {
             return (err, fields, files) => {
                 let fileLink = fields.filePath;
                 let detail = fields.detail;
-                console.log(`sending ${fileLink}`);
                 db.insertFileLink(fileLink, detail);
-                res.writeHead(200, { 'content-type': 'text/plain' });
-                res.end();
-            };
-        }
-        else if (url.startsWith('/register-file-big')) {
-            return (err, fields, files) => {
-                let fileLink = {
-                    owner: fields.owner,
-                    folder: fields.folder,
-                    experimentName: fields.experimentName,
-                    channelNumber: parseInt(fields.channelNumber),
-                    channelName: fields.channelName,
-                    seqNumber: parseInt(fields.seqNumber),
-                    detail: fields.detail
-                };
-                console.log(`sending ${fileLink.detail}\n${fileLink.experimentName}/${fileLink.channelNumber}/${fileLink.seqNumber}`);
-                db.registerFile(fileLink);
                 res.writeHead(200, { 'content-type': 'text/plain' });
                 res.end();
             };
