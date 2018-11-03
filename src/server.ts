@@ -1,3 +1,5 @@
+process.env["NODE_CONFIG_DIR"] = __dirname + "/config/";
+
 import * as http from "http";
 import * as path from "path";
 import * as fs from "fs";

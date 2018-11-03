@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+process.env["NODE_CONFIG_DIR"] = __dirname + "/config/";
 const http = require("http");
 const path = require("path");
 const fs = require("fs");
