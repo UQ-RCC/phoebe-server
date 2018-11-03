@@ -12,7 +12,7 @@ import * as config from "config"
 import {DBIO, FileLink} from "./database";
 import { Duplex } from "stream";
 
-let derivedBase = config.get<string>('derivedBase');
+let fileBase = config.get<string>('fileBase');
 let u = util.inspect;
 let db = new DBIO();
 
@@ -21,7 +21,7 @@ function getFile(url: string): { fileStream: fs.ReadStream, mimeType: string, fi
     let mimeType: string;
     let fileName: string = url.substr(1);
     console.log(`looking for ${fileName}`);
-    fileName = path.join(derivedBase, fileName.substr(0,2), fileName.substr(2,2), url);    
+    fileName = path.join(fileBase, fileName.substr(0,2), fileName.substr(2,2), url);    
     mimeType = "application/x-binary";
     if (fs.existsSync(fileName))
     {
@@ -121,15 +121,5 @@ class PhoebeServer
     }
 
 }
-
-// let f: FileLink = 
-// {
-//     runUUI: uuid.v4(),
-//     root: 'd:/data/light-sheet',
-//     target: 'blah/file.bz2',
-//     size: 90210
-// }
-
-// db.registerFile(f);
 
 let server = new PhoebeServer();

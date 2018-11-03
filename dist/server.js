@@ -7,14 +7,14 @@ const formidable = require("formidable");
 const util = require("util");
 const config = require("config");
 const database_1 = require("./database");
-let derivedBase = config.get('derivedBase');
+let fileBase = config.get('fileBase');
 let u = util.inspect;
 let db = new database_1.DBIO();
 function getFile(url) {
     let mimeType;
     let fileName = url.substr(1);
     console.log(`looking for ${fileName}`);
-    fileName = path.join(derivedBase, fileName.substr(0, 2), fileName.substr(2, 2), url);
+    fileName = path.join(fileBase, fileName.substr(0, 2), fileName.substr(2, 2), url);
     mimeType = "application/x-binary";
     if (fs.existsSync(fileName)) {
         const fileStream = fs.createReadStream(fileName);
@@ -88,13 +88,5 @@ class PhoebeServer {
         }
     }
 }
-// let f: FileLink = 
-// {
-//     runUUI: uuid.v4(),
-//     root: 'd:/data/light-sheet',
-//     target: 'blah/file.bz2',
-//     size: 90210
-// }
-// db.registerFile(f);
 let server = new PhoebeServer();
 //# sourceMappingURL=server.js.map
