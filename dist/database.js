@@ -100,6 +100,7 @@ class DBIO {
             values: [fileLink, detail]
         };
         this.pool.query(insertFileReference)
+            .then(r => { console.log(util.inspect(r)); })
             .catch(e => console.log(`${e}`));
     }
     nextJob() {

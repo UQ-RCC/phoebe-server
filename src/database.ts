@@ -160,6 +160,7 @@ export class DBIO
         }
         
         this.pool.query(insertFileReference)
+            .then(r => {console.log(util.inspect(r))})
             .catch(e => console.log(`${e}`)
         );
        
