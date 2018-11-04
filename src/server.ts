@@ -88,11 +88,12 @@ class PhoebeServer
     {
         let url = req.url as string;
         if (url.startsWith('/register-file'))
-        {            
+        {
             return (err, fields: formidable.Fields, files: formidable.Files) =>
             {
                 let fileLink = <string>fields.filePath;
                 let detail = <string>fields.detail;         
+                console.log(`register: ${fileLink}`);
                 db.insertFileLink(fileLink, detail);                
                 res.writeHead(200, {'content-type': 'text/plain'});
                 res.end();
