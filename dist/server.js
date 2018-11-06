@@ -7,6 +7,7 @@ const fs = require("fs");
 const os = require("os");
 const formidable = require("formidable");
 const util = require("util");
+const mkdirp = require("mkdirp");
 const config = require("config");
 const reqIP = require("request-ip");
 const database_1 = require("./database");
@@ -50,7 +51,6 @@ class PhoebeServer {
         });
     }
     get(req, res) {
-        //res.end(`got '${req.url}' from ${os.hostname}`);
         let form = new formidable.IncomingForm(); // hack
         form.maxFileSize = 1024 * 1024 * 500 * 2;
         form.parse(req, this.getParser(req, res));
@@ -58,6 +58,13 @@ class PhoebeServer {
     post(req, res) {
         let form = new formidable.IncomingForm();
         form.maxFileSize = 1024 * 1024 * 500 * 2;
+        form.on('fileBegin', (name, file) => {
+            let filePath = path.join(fileBase, 'test', name.substr(0, 2), name.substr(2, 2));
+            if (!fs.existsSync(filePath)) {
+                mkdirp.sync(filePath);
+            }
+            file.path = path.join(filePath, name);
+        });
         form.parse(req, this.getParser(req, res));
     }
     other(req, res) {
@@ -79,11 +86,6 @@ class PhoebeServer {
             return (err, fields, files) => {
                 let filename = fields.filePath;
                 let md5sum = fields.md5sum;
-                let byteBuffer = files['byte-buffer'];
-                if (byteBuffer) {
-                    console.log(`files: ${byteBuffer.name}`);
-                    //fs.writeSync(`${fileBase}`, byteBuffer.);
-                }
                 console.log(`register-test: ${os.hostname} ${Date.now()} ${reqIP.getClientIp(req)} ${filename} ${md5sum}`);
                 res.writeHead(200, { 'content-type': 'text/plain' });
                 res.end();

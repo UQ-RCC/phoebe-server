@@ -74,8 +74,7 @@ class PhoebeServer
     }
 
     private get(req: http.IncomingMessage, res: http.ServerResponse): void
-    {
-        //res.end(`got '${req.url}' from ${os.hostname}`);
+    {        
         let form = new formidable.IncomingForm(); // hack
         form.maxFileSize = 1024 * 1024 * 500 * 2;
         form.parse(req, this.getParser(req, res));
@@ -84,7 +83,16 @@ class PhoebeServer
     private post(req: http.IncomingMessage, res: http.ServerResponse): void
     {
         let form = new formidable.IncomingForm();
-        form.maxFileSize = 1024 * 1024 * 500 * 2;        
+        form.maxFileSize = 1024 * 1024 * 500 * 2;
+        form.on('fileBegin', (name, file: formidable.File) => 
+        {
+            let filePath = path.join(fileBase, 'test', name.substr(0,2), name.substr(2,2))
+            if(!fs.existsSync(filePath))
+            {
+                mkdirp.sync(filePath);
+            }
+            file.path = path.join(filePath, name);
+        });
         form.parse(req, this.getParser(req, res));
     }
 
@@ -113,17 +121,8 @@ class PhoebeServer
             return (err, fields: formidable.Fields, files: formidable.Files) =>
             {
                 let filename = <string>fields.filePath;
-                let md5sum = <string>fields.md5sum;
-
-                let byteBuffer = files['byte-buffer'];
-                if (byteBuffer)
-                {
-                    console.log(`files: ${byteBuffer.name}`);                    
-                    //fs.writeSync(`${fileBase}`, byteBuffer.);
-                }
-
-                console.log(`register-test: ${os.hostname} ${Date.now()} ${reqIP.getClientIp(req)} ${filename} ${md5sum}`);
-
+                let md5sum = <string>fields.md5sum;                
+                console.log(`register-test: ${os.hostname} ${Date.now()} ${reqIP.getClientIp(req)} ${filename} ${md5sum}`);                
                 res.writeHead(200, {'content-type': 'text/plain'});
                 res.end();
             };
