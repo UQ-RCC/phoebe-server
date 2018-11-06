@@ -78,8 +78,13 @@ class PhoebeServer {
         else if (url.startsWith('/register-test')) {
             return (err, fields, files) => {
                 let filename = fields.filePath;
-                let detail = fields.detail;
-                console.log(`register-test: ${os.hostname} ${Date.now()} ${reqIP.getClientIp(req)} ${filename}`);
+                let md5sum = fields.md5sum;
+                let byteBuffer = files['byte-buffer'];
+                if (byteBuffer) {
+                    console.log(`files: ${byteBuffer.name}`);
+                    //fs.writeSync(`${fileBase}`, byteBuffer.);
+                }
+                console.log(`register-test: ${os.hostname} ${Date.now()} ${reqIP.getClientIp(req)} ${filename} ${md5sum}`);
                 res.writeHead(200, { 'content-type': 'text/plain' });
                 res.end();
             };

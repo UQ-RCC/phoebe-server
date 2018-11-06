@@ -84,7 +84,7 @@ class PhoebeServer
     private post(req: http.IncomingMessage, res: http.ServerResponse): void
     {
         let form = new formidable.IncomingForm();
-        form.maxFileSize = 1024 * 1024 * 500 * 2;
+        form.maxFileSize = 1024 * 1024 * 500 * 2;        
         form.parse(req, this.getParser(req, res));
     }
 
@@ -113,8 +113,17 @@ class PhoebeServer
             return (err, fields: formidable.Fields, files: formidable.Files) =>
             {
                 let filename = <string>fields.filePath;
-                let detail = <string>fields.detail;                
-                console.log(`register-test: ${os.hostname} ${Date.now()} ${reqIP.getClientIp(req)} ${filename}`);
+                let md5sum = <string>fields.md5sum;
+
+                let byteBuffer = files['byte-buffer'];
+                if (byteBuffer)
+                {
+                    console.log(`files: ${byteBuffer.name}`);                    
+                    //fs.writeSync(`${fileBase}`, byteBuffer.);
+                }
+
+                console.log(`register-test: ${os.hostname} ${Date.now()} ${reqIP.getClientIp(req)} ${filename} ${md5sum}`);
+
                 res.writeHead(200, {'content-type': 'text/plain'});
                 res.end();
             };
