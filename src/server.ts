@@ -9,6 +9,7 @@ import * as util from "util"
 import * as uuid from "uuid"
 import * as mkdirp from "mkdirp"
 import * as config from "config"
+import * as reqIP from "request-ip"
 
 
 import {DBIO, FileLink} from "./database";
@@ -112,8 +113,8 @@ class PhoebeServer
             return (err, fields: formidable.Fields, files: formidable.Files) =>
             {
                 let filename = <string>fields.filePath;
-                let detail = <string>fields.detail;         
-                console.log(`register-test: ${os.hostname} ${Date.now()} ${req.headers.host} ${filename}`);
+                let detail = <string>fields.detail;                
+                console.log(`register-test: ${os.hostname} ${Date.now()} ${reqIP.getClientIp(req)} ${filename}`);
                 res.writeHead(200, {'content-type': 'text/plain'});
                 res.end();
             };

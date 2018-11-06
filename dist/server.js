@@ -8,6 +8,7 @@ const os = require("os");
 const formidable = require("formidable");
 const util = require("util");
 const config = require("config");
+const reqIP = require("request-ip");
 const database_1 = require("./database");
 let fileBase = config.get('fileBase');
 let u = util.inspect;
@@ -78,7 +79,7 @@ class PhoebeServer {
             return (err, fields, files) => {
                 let filename = fields.filePath;
                 let detail = fields.detail;
-                console.log(`register-test: ${os.hostname} ${Date.now()} ${req.headers.host} ${filename}`);
+                console.log(`register-test: ${os.hostname} ${Date.now()} ${reqIP.getClientIp(req)} ${filename}`);
                 res.writeHead(200, { 'content-type': 'text/plain' });
                 res.end();
             };
