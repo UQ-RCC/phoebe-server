@@ -4,6 +4,7 @@ process.env["NODE_CONFIG_DIR"] = __dirname + "/config/";
 const http = require("http");
 const path = require("path");
 const fs = require("fs");
+const os = require("os");
 const formidable = require("formidable");
 const util = require("util");
 const config = require("config");
@@ -43,6 +44,9 @@ class PhoebeServer {
         let port = config.get('port');
         this.server.listen(port);
         console.log(`Neo Phoebe server is listening on ${port}`);
+        this.server.on('connect', (req, cltSocket, head) => {
+            console.log(`connection from ${cltSocket.remotePort}`);
+        });
     }
     get(req, res) {
         //res.end(`got '${req.url}' from ${os.hostname}`);
@@ -65,7 +69,16 @@ class PhoebeServer {
                 let fileLink = fields.filePath;
                 let detail = fields.detail;
                 console.log(`register: ${fileLink}`);
-                //db.insertFileLink(fileLink, detail);
+                db.insertFileLink(fileLink, detail);
+                res.writeHead(200, { 'content-type': 'text/plain' });
+                res.end();
+            };
+        }
+        else if (url.startsWith('/register-test')) {
+            return (err, fields, files) => {
+                let filename = fields.filePath;
+                let detail = fields.detail;
+                console.log(`register-test: ${os.hostname} ${Date.now()} ${req.headers.host} ${filename}`);
                 res.writeHead(200, { 'content-type': 'text/plain' });
                 res.end();
             };

@@ -13,6 +13,7 @@ import * as config from "config"
 
 import {DBIO, FileLink} from "./database";
 import { Duplex } from "stream";
+import { Socket } from "net";
 
 let fileBase = config.get<string>('fileBase');
 let u = util.inspect;
@@ -45,11 +46,12 @@ class PhoebeServer
     constructor()
     {
         this.server = http.createServer((req, res) =>
-        {            
+        {               
             if (req.method === "GET")
             {
                 this.get(req, res)
             }
+
             else if (req.method === "POST")
             {
                 this.post(req, res);
@@ -62,6 +64,12 @@ class PhoebeServer
         let port = config.get<number>('port');
         this.server.listen(port);
         console.log(`Neo Phoebe server is listening on ${port}`);
+
+        this.server.on('connect', (req, cltSocket: Socket, head) =>
+        {
+            console.log(`connection from ${cltSocket.remotePort}`)
+        });
+
     }
 
     private get(req: http.IncomingMessage, res: http.ServerResponse): void
@@ -94,11 +102,22 @@ class PhoebeServer
                 let fileLink = <string>fields.filePath;
                 let detail = <string>fields.detail;         
                 console.log(`register: ${fileLink}`);
-                //db.insertFileLink(fileLink, detail);
+                db.insertFileLink(fileLink, detail);
                 res.writeHead(200, {'content-type': 'text/plain'});
                 res.end();
             };
-        }        
+        }
+        else if (url.startsWith('/register-test'))
+        {
+            return (err, fields: formidable.Fields, files: formidable.Files) =>
+            {
+                let filename = <string>fields.filePath;
+                let detail = <string>fields.detail;         
+                console.log(`register-test: ${os.hostname} ${Date.now()} ${req.headers.host} ${filename}`);
+                res.writeHead(200, {'content-type': 'text/plain'});
+                res.end();
+            };
+        }
         else if (url.startsWith('/next-job'))
         {            
             return (err, fields: formidable.Fields, files: formidable.Files) =>

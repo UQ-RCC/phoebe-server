@@ -34,13 +34,9 @@ export class DBIO
 {
     private pool: pg.Pool;
     
-    
-
     public constructor()
     {
-        let dbparam = config.get<pg.PoolConfig>("database");        
-        
-        
+        let dbparam = config.get<pg.PoolConfig>("database");                
         this.pool = new pg.Pool(dbparam);
         this.pool.connect((e, client, release) =>
         {
