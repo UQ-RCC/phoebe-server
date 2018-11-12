@@ -94,7 +94,7 @@ class DBIO {
     insertTestRecord(record) {
         const query = `insert into test_log(host, client, filename, md5sum, bytes)
         values($1, $2, $3, $4, $5)
-        returning (select coalesce(sum(bytes), 0) from test_log)::integer as total_bytes;`;
+        returning (select coalesce(sum(bytes), 0) from test_log)::bigint as total_bytes;`;
         return new Promise((resolve, reject) => {
             this.pool.query(query, record)
                 .then(r => {
