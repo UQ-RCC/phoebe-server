@@ -111,7 +111,7 @@ class PhoebeServer {
                 let md5sum = fields.md5sum;
                 let bytes = parseInt(fields.bytes);
                 let clientAddress = this.getClientIP(req);
-                let record = [os.hostname, clientAddress, filename, md5sum, bytes];
+                let record = [os.hostname(), clientAddress, filename, md5sum, bytes];
                 try {
                     let totalBytes = await db.insertTestRecord(record);
                     res.writeHead(200, { 'content-type': 'text/plain' });
