@@ -7,21 +7,9 @@ class DBIO {
     constructor() {
         let dbparam = config.get("database");
         this.pool = new pg.Pool(dbparam);
-        this.pool.connect((e, client, release) => {
-            if (e) {
-                console.log(util.inspect(e));
-            }
-            else {
-                client.query('select * from version();')
-                    .then(res => {
-                    console.log(`connected to Postgres server: ${res.rows[0].version}`);
-                    client.release();
-                })
-                    .catch(e => {
-                    console.log(util.inspect(e));
-                });
-            }
-        });
+        this.pool.query('select * from version();')
+            .then(res => console.log(` *** connected to Postgres server: ${res.rows[0].version}`))
+            .catch(e => console.log(util.inspect(e)));
     }
     insertFrame(frame) {
         return new Promise((resolve, reject) => {
@@ -102,6 +90,22 @@ class DBIO {
         this.pool.query(insertFileReference)
             .then(r => { console.log(util.inspect(r)); })
             .catch(e => console.log(`${e}`));
+    }
+    insertTestRecord(record) {
+        const query = `insert into test_log(host, client, filename, md5sum, bytes)
+        values($1, $2, $3, $4, $5)
+        returning (select coalesce(sum(bytes), 0) from test_log)::integer as total_bytes;`;
+        return new Promise((resolve, reject) => {
+            this.pool.query(query, record)
+                .then(r => {
+                let byteCount = r.rows[0]['total_bytes'];
+                resolve(byteCount);
+            })
+                .catch(e => {
+                console.log(`caught: ${util.inspect(e)}`);
+                reject(`nope`);
+            });
+        });
     }
     nextJob() {
         return new Promise((resolve, reject) => {

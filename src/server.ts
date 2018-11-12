@@ -9,16 +9,34 @@ import * as util from "util"
 import * as uuid from "uuid"
 import * as mkdirp from "mkdirp"
 import * as config from "config"
-import * as reqIP from "request-ip"
+//import * as reqIP from "request-ip"
 
+import * as reqIP from "./utilities"
 
 import {DBIO, FileLink} from "./database";
 import { Duplex } from "stream";
 import { Socket } from "net";
+import md5 = require("md5");
+import { IncomingMessage } from "https";
 
 let fileBase = config.get<string>('fileBase');
 let u = util.inspect;
 let db = new DBIO();
+
+class TestRecord
+{
+    public totalBytes: number
+    public foo: number = 101;
+    public bar: number | null;
+    public moreNumber: number;
+
+    constructor(totalBytes: number) 
+    {        
+        this.totalBytes = totalBytes;
+        this.bar = null;
+        this.moreNumber = 90210.2 + totalBytes;
+    };
+}
 
 function getFile(url: string): { fileStream: fs.ReadStream, mimeType: string, fileName: string } | null
 {
@@ -73,6 +91,26 @@ class PhoebeServer
 
     }
 
+    private getClientIP(req: http.IncomingMessage): string | undefined
+    {        
+        if (req.headers['x-real-ip'])
+        {
+            let ip = req.headers['x-real-ip'];
+            if (util.isArray(ip))
+            {
+                return req.headers['x-real-ip'][0];
+            }
+            else
+            {
+                return req.headers['x-real-ip'] as string;
+            }
+        }
+        else
+        {
+            return req.connection.remoteAddress;
+        }
+    }
+
     private get(req: http.IncomingMessage, res: http.ServerResponse): void
     {        
         let form = new formidable.IncomingForm(); // hack
@@ -86,6 +124,7 @@ class PhoebeServer
         form.maxFileSize = 1024 * 1024 * 500 * 2;
         form.on('fileBegin', (name, file: formidable.File) => 
         {
+            // write files into test.
             let filePath = path.join(fileBase, 'test', name.substr(0,2), name.substr(2,2))
             if(!fs.existsSync(filePath))
             {
@@ -118,13 +157,24 @@ class PhoebeServer
         }
         else if (url.startsWith('/register-test'))
         {
-            return (err, fields: formidable.Fields, files: formidable.Files) =>
+            return async (err, fields: formidable.Fields, files: formidable.Files) =>
             {
                 let filename = <string>fields.filePath;
-                let md5sum = <string>fields.md5sum;                
-                console.log(`register-test: ${os.hostname} ${Date.now()} ${reqIP.getClientIp(req)} ${filename} ${md5sum}`);                
-                res.writeHead(200, {'content-type': 'text/plain'});
-                res.end();
+                let md5sum = <string>fields.md5sum;
+                let bytes = parseInt(<string>fields.bytes);                
+                let clientAddress = this.getClientIP(req);
+                let record = [os.hostname, clientAddress, filename, md5sum, bytes];
+                try
+                {
+                    let totalBytes: number = await db.insertTestRecord(record);
+                    res.writeHead(200, {'content-type': 'text/plain'});
+                    res.end(JSON.stringify({totalBytes: totalBytes}));
+                }
+                catch (e)
+                {
+                    res.writeHead(500, {'content-type': 'text/plain'});
+                    res.end(e);
+                }
             };
         }
         else if (url.startsWith('/next-job'))

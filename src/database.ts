@@ -30,34 +30,22 @@ export interface FileLink
     detail: string
 }
 
+export interface Record
+{
+    table: string,
+    data: {[column: string] : string | number}
+}
+
 export class DBIO
 {
-    private pool: pg.Pool;
-    
+    public pool: pg.Pool;
     public constructor()
     {
         let dbparam = config.get<pg.PoolConfig>("database");                
         this.pool = new pg.Pool(dbparam);
-        this.pool.connect((e, client, release) =>
-        {
-            if (e)
-            {
-                console.log(util.inspect(e));
-            }
-            else
-            {
-                client.query('select * from version();')
-                    .then(res =>
-                    {                        
-                        console.log(`connected to Postgres server: ${res.rows[0].version}`);
-                        client.release();
-                    })
-                    .catch(e =>
-                    {
-                        console.log(util.inspect(e));
-                    })
-            }
-        });
+        this.pool.query('select * from version();')
+            .then(res => console.log(` *** connected to Postgres server: ${res.rows[0].version}`))
+            .catch(e => console.log(util.inspect(e)));
     }
 
     public insertFrame(frame: ImageFrame): Promise<string>
@@ -157,9 +145,30 @@ export class DBIO
         
         this.pool.query(insertFileReference)
             .then(r => {console.log(util.inspect(r))})
-            .catch(e => console.log(`${e}`)
-        );
-       
+            .catch(e => console.log(`${e}`));       
+    }
+
+    public insertTestRecord(record: any[]): Promise<number>
+    {
+        const query: string =
+        `insert into test_log(host, client, filename, md5sum, bytes)
+        values($1, $2, $3, $4, $5)
+        returning (select coalesce(sum(bytes), 0) from test_log)::integer as total_bytes;`
+
+        return new Promise<number>((resolve, reject) =>
+        {
+            this.pool.query(query, record)
+                .then(r =>
+                {                    
+                    let byteCount = r.rows[0]['total_bytes'] as number;           
+                    resolve(byteCount);
+                })
+                .catch(e => 
+                {
+                    console.log(`caught: ${util.inspect(e)}`);
+                    reject(`nope`);
+                });
+        });
     }
 
     public nextJob(): Promise<string>

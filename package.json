@@ -15,20 +15,20 @@
   "dependencies": {
     "@types/config": "0.0.34",
     "@types/formidable": "^1.0.31",
+    "@types/is": "0.0.21",
     "@types/json-stringify-safe": "5.0.0",
     "@types/md5": "^2.1.33",
     "@types/mkdirp": "^0.5.2",
     "@types/pg": "^6.1.47",
-    "@types/request-ip": "0.0.33",
     "@types/uuid": "^3.4.4",
     "config": "^1.31.0",
     "formidable": "^1.2.1",
+    "is": "^3.2.1",
     "json-stringify-safe": "5.0.1",
     "md5": "^2.2.1",
     "mkdirp": "^0.5.1",
     "moment": "^2.22.2",
     "pg": "^7.5.0",
-    "request-ip": "^2.1.3",
     "uuid": "^3.3.2"
   },
   "devDependencies": {

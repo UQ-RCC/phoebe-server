@@ -9,11 +9,19 @@ const formidable = require("formidable");
 const util = require("util");
 const mkdirp = require("mkdirp");
 const config = require("config");
-const reqIP = require("request-ip");
 const database_1 = require("./database");
 let fileBase = config.get('fileBase');
 let u = util.inspect;
 let db = new database_1.DBIO();
+class TestRecord {
+    constructor(totalBytes) {
+        this.foo = 101;
+        this.totalBytes = totalBytes;
+        this.bar = null;
+        this.moreNumber = 90210.2 + totalBytes;
+    }
+    ;
+}
 function getFile(url) {
     let mimeType;
     let fileName = url.substr(1);
@@ -50,6 +58,20 @@ class PhoebeServer {
             console.log(`connection from ${cltSocket.remotePort}`);
         });
     }
+    getClientIP(req) {
+        if (req.headers['x-real-ip']) {
+            let ip = req.headers['x-real-ip'];
+            if (util.isArray(ip)) {
+                return req.headers['x-real-ip'][0];
+            }
+            else {
+                return req.headers['x-real-ip'];
+            }
+        }
+        else {
+            return req.connection.remoteAddress;
+        }
+    }
     get(req, res) {
         let form = new formidable.IncomingForm(); // hack
         form.maxFileSize = 1024 * 1024 * 500 * 2;
@@ -59,6 +81,7 @@ class PhoebeServer {
         let form = new formidable.IncomingForm();
         form.maxFileSize = 1024 * 1024 * 500 * 2;
         form.on('fileBegin', (name, file) => {
+            // write files into test.
             let filePath = path.join(fileBase, 'test', name.substr(0, 2), name.substr(2, 2));
             if (!fs.existsSync(filePath)) {
                 mkdirp.sync(filePath);
@@ -83,12 +106,21 @@ class PhoebeServer {
             };
         }
         else if (url.startsWith('/register-test')) {
-            return (err, fields, files) => {
+            return async (err, fields, files) => {
                 let filename = fields.filePath;
                 let md5sum = fields.md5sum;
-                console.log(`register-test: ${os.hostname} ${Date.now()} ${reqIP.getClientIp(req)} ${filename} ${md5sum}`);
-                res.writeHead(200, { 'content-type': 'text/plain' });
-                res.end();
+                let bytes = parseInt(fields.bytes);
+                let clientAddress = this.getClientIP(req);
+                let record = [os.hostname, clientAddress, filename, md5sum, bytes];
+                try {
+                    let totalBytes = await db.insertTestRecord(record);
+                    res.writeHead(200, { 'content-type': 'text/plain' });
+                    res.end(JSON.stringify({ totalBytes: totalBytes }));
+                }
+                catch (e) {
+                    res.writeHead(500, { 'content-type': 'text/plain' });
+                    res.end(e);
+                }
             };
         }
         else if (url.startsWith('/next-job')) {
