@@ -165,6 +165,7 @@ export class DBIO
                 })
                 .catch(e => 
                 {
+                    console.log(`error inserting ${query}\nwith values: ${util.inspect(record)}`);
                     console.log(`caught: ${util.inspect(e)}`);
                     reject(`nope`);
                 });
