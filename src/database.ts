@@ -155,6 +155,8 @@ export class DBIO
         values($1, $2, $3, $4, $5)
         returning (select coalesce(sum(bytes), 0) from test_log)::bigint as total_bytes;`
 
+        console.log(`inserting ${util.inspect(record)}`);
+
         return new Promise<number>((resolve, reject) =>
         {
             this.pool.query(query, record)
