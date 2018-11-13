@@ -153,7 +153,7 @@ export class DBIO
         const query: string =
         `insert into test_log(host, client, filename, md5sum, bytes)
         values($1, $2, $3, $4, $5)
-        returning (select coalesce(sum(bytes), 0) from test_log)::integer as total_bytes;`
+        returning (select coalesce(sum(bytes), 0) from test_log)::bigint as total_bytes;`
 
         return new Promise<number>((resolve, reject) =>
         {
