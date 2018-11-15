@@ -17,26 +17,10 @@ import {DBIO, FileLink} from "./database";
 import { Duplex } from "stream";
 import { Socket } from "net";
 import md5 = require("md5");
-import { IncomingMessage } from "https";
 
 let fileBase = config.get<string>('fileBase');
 let u = util.inspect;
 let db = new DBIO();
-
-class TestRecord
-{
-    public totalBytes: number
-    public foo: number = 101;
-    public bar: number | null;
-    public moreNumber: number;
-
-    constructor(totalBytes: number) 
-    {        
-        this.totalBytes = totalBytes;
-        this.bar = null;
-        this.moreNumber = 90210.2 + totalBytes;
-    };
-}
 
 function getFile(url: string): { fileStream: fs.ReadStream, mimeType: string, fileName: string } | null
 {
@@ -82,6 +66,7 @@ class PhoebeServer
         });
         let port = config.get<number>('port');
         this.server.listen(port);
+
         console.log(`Neo Phoebe server is listening on ${port}`);
 
         this.server.on('connect', (req, cltSocket: Socket, head) =>
@@ -98,11 +83,11 @@ class PhoebeServer
             let ip = req.headers['x-real-ip'];
             if (util.isArray(ip))
             {
-                return req.headers['x-real-ip'][0];
+                return ip[0];
             }
             else
             {
-                return req.headers['x-real-ip'] as string;
+                return ip;
             }
         }
         else
@@ -119,7 +104,7 @@ class PhoebeServer
     }
 
     private post(req: http.IncomingMessage, res: http.ServerResponse): void
-    {
+    {        
         let form = new formidable.IncomingForm();
         form.maxFileSize = 1024 * 1024 * 500 * 2;
         form.on('fileBegin', (name, file: formidable.File) => 
@@ -132,6 +117,14 @@ class PhoebeServer
             }
             file.path = path.join(filePath, name);
         });
+
+        form.on('end', () =>
+        {
+            console.log(`this is the end`);
+        })
+
+
+
         form.parse(req, this.getParser(req, res));
     }
 
@@ -142,7 +135,7 @@ class PhoebeServer
 
     private getParser(req: http.IncomingMessage, res: http.ServerResponse): (err: any, fields: formidable.Fields, files: formidable.Files) => void
     {
-        let url = req.url as string;
+        let url = req.url as string;        
         if (url.startsWith('/register-file'))
         {
             return (err, fields: formidable.Fields, files: formidable.Files) =>
@@ -164,16 +157,19 @@ class PhoebeServer
                 let bytes = parseInt(<string>fields.bytes);                
                 let clientAddress = this.getClientIP(req);
                 let record = [os.hostname(), clientAddress, filename, md5sum, bytes];
-                try
+                if (!err)
                 {
-                    let totalBytes: number = await db.insertTestRecord(record);
-                    res.writeHead(200, {'content-type': 'text/plain'});
-                    res.end(JSON.stringify({totalBytes: totalBytes}));
-                }
-                catch (e)
-                {
-                    res.writeHead(500, {'content-type': 'text/plain'});
-                    res.end(e);
+                    try
+                    {                    
+                        let totalBytes: number = await db.insertTestRecord(record);
+                        res.writeHead(200, {'content-type': 'text/plain'});
+                        res.end(JSON.stringify({totalBytes: totalBytes}));
+                    }
+                    catch (e)
+                    {
+                        res.writeHead(500, {'content-type': 'text/plain'});
+                        res.end(e);
+                    }
                 }
             };
         }
@@ -203,4 +199,5 @@ class PhoebeServer
 
 }
 
+console.log(`node ${process.version} @ ${process.execPath}`);
 let server = new PhoebeServer();

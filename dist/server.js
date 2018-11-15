@@ -13,15 +13,6 @@ const database_1 = require("./database");
 let fileBase = config.get('fileBase');
 let u = util.inspect;
 let db = new database_1.DBIO();
-class TestRecord {
-    constructor(totalBytes) {
-        this.foo = 101;
-        this.totalBytes = totalBytes;
-        this.bar = null;
-        this.moreNumber = 90210.2 + totalBytes;
-    }
-    ;
-}
 function getFile(url) {
     let mimeType;
     let fileName = url.substr(1);
@@ -62,10 +53,10 @@ class PhoebeServer {
         if (req.headers['x-real-ip']) {
             let ip = req.headers['x-real-ip'];
             if (util.isArray(ip)) {
-                return req.headers['x-real-ip'][0];
+                return ip[0];
             }
             else {
-                return req.headers['x-real-ip'];
+                return ip;
             }
         }
         else {
@@ -87,6 +78,9 @@ class PhoebeServer {
                 mkdirp.sync(filePath);
             }
             file.path = path.join(filePath, name);
+        });
+        form.on('end', () => {
+            console.log(`this is the end`);
         });
         form.parse(req, this.getParser(req, res));
     }
@@ -112,14 +106,16 @@ class PhoebeServer {
                 let bytes = parseInt(fields.bytes);
                 let clientAddress = this.getClientIP(req);
                 let record = [os.hostname(), clientAddress, filename, md5sum, bytes];
-                try {
-                    let totalBytes = await db.insertTestRecord(record);
-                    res.writeHead(200, { 'content-type': 'text/plain' });
-                    res.end(JSON.stringify({ totalBytes: totalBytes }));
-                }
-                catch (e) {
-                    res.writeHead(500, { 'content-type': 'text/plain' });
-                    res.end(e);
+                if (!err) {
+                    try {
+                        let totalBytes = await db.insertTestRecord(record);
+                        res.writeHead(200, { 'content-type': 'text/plain' });
+                        res.end(JSON.stringify({ totalBytes: totalBytes }));
+                    }
+                    catch (e) {
+                        res.writeHead(500, { 'content-type': 'text/plain' });
+                        res.end(e);
+                    }
                 }
             };
         }
@@ -143,5 +139,6 @@ class PhoebeServer {
         }
     }
 }
+console.log(`node ${process.version} @ ${process.execPath}`);
 let server = new PhoebeServer();
 //# sourceMappingURL=server.js.map
