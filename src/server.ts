@@ -171,6 +171,10 @@ class PhoebeServer
                         res.end(e);
                     }
                 }
+                else
+                {
+                    console.log(`connection error`);
+                }
             };
         }
         else if (url.startsWith('/next-job'))
