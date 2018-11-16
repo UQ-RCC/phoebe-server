@@ -9,6 +9,7 @@ const formidable = require("formidable");
 const util = require("util");
 const mkdirp = require("mkdirp");
 const config = require("config");
+const se = require("serialize-error");
 const database_1 = require("./database");
 let fileBase = config.get('fileBase');
 let u = util.inspect;
@@ -45,9 +46,6 @@ class PhoebeServer {
         let port = config.get('port');
         this.server.listen(port);
         console.log(`Neo Phoebe server is listening on ${port}`);
-        this.server.on('connect', (req, cltSocket, head) => {
-            console.log(`connection from ${cltSocket.remotePort}`);
-        });
     }
     getClientIP(req) {
         if (req.headers['x-real-ip']) {
@@ -110,11 +108,16 @@ class PhoebeServer {
                     try {
                         let totalBytes = await db.insertTestRecord(record);
                         res.writeHead(200, { 'content-type': 'text/plain' });
-                        res.end(JSON.stringify({ totalBytes: totalBytes }));
+                        res.end(JSON.stringify({ "totalBytes": totalBytes }));
                     }
                     catch (e) {
+                        let clientAddress = this.getClientIP(req);
+                        if (!clientAddress) {
+                            clientAddress = 'NA';
+                        }
+                        db.insertError(os.hostname(), clientAddress, se(e));
                         res.writeHead(500, { 'content-type': 'text/plain' });
-                        res.end(e);
+                        res.end(JSON.stringify(se));
                     }
                 }
                 else {

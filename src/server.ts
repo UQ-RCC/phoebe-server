@@ -6,16 +6,11 @@ import * as fs from "fs";
 import * as os from "os";
 import * as formidable from "formidable"
 import * as util from "util"
-import * as uuid from "uuid"
 import * as mkdirp from "mkdirp"
 import * as config from "config"
-//import * as reqIP from "request-ip"
-
-import * as reqIP from "./utilities"
+import * as se from 'serialize-error'
 
 import {DBIO, FileLink} from "./database";
-import { Duplex } from "stream";
-import { Socket } from "net";
 import md5 = require("md5");
 
 let fileBase = config.get<string>('fileBase');
@@ -66,14 +61,7 @@ class PhoebeServer
         });
         let port = config.get<number>('port');
         this.server.listen(port);
-
         console.log(`Neo Phoebe server is listening on ${port}`);
-
-        this.server.on('connect', (req, cltSocket: Socket, head) =>
-        {
-            console.log(`connection from ${cltSocket.remotePort}`)
-        });
-
     }
 
     private getClientIP(req: http.IncomingMessage): string | undefined
@@ -163,12 +151,18 @@ class PhoebeServer
                     {                    
                         let totalBytes: number = await db.insertTestRecord(record);
                         res.writeHead(200, {'content-type': 'text/plain'});
-                        res.end(JSON.stringify({totalBytes: totalBytes}));
+                        res.end(JSON.stringify({"totalBytes": totalBytes}));
                     }
                     catch (e)
                     {
+                        let clientAddress = this.getClientIP(req);
+                        if (!clientAddress)
+                        {
+                            clientAddress = 'NA';
+                        }
+                        db.insertError(os.hostname(), clientAddress, se(e));
                         res.writeHead(500, {'content-type': 'text/plain'});
-                        res.end(e);
+                        res.end(JSON.stringify(se));
                     }
                 }
                 else

@@ -1,6 +1,7 @@
 import * as util from "util";
 import * as pg from "pg";
 import * as config from "config";
+import * as se from "serialize-error";
 
 export interface ImageFrame
 {
@@ -155,8 +156,6 @@ export class DBIO
         values($1, $2, $3, $4, $5)
         returning (select coalesce(sum(bytes), 0) from test_log)::bigint as total_bytes;`
 
-        console.log(`inserting ${util.inspect(record)}`);
-
         return new Promise<number>((resolve, reject) =>
         {
             this.pool.query(query, record)
@@ -165,12 +164,31 @@ export class DBIO
                     let byteCount = r.rows[0]['total_bytes'] as number;           
                     resolve(byteCount);
                 })
-                .catch(e => 
-                {
-                    console.log(`error inserting ${query}\nwith values: ${util.inspect(record)}`);
-                    console.log(`caught: ${util.inspect(e)}`);
-                    reject(`nope`);
+                .catch((e: Error) => 
+                {                    
+                    let errJSON = JSON.stringify(se(e),null,3);
+                    console.log(errJSON);
+                    reject(errJSON);
                 });
+        });
+    }
+
+    public insertError(host: string, client: string, error: se.ErrorObject): Promise<null>
+    {
+        const query: string =
+        `insert into error_log(host, client, error)
+        values($1, $2, $3)`;
+
+        return new Promise<null>((resolve, reject) =>
+        {
+            this.pool.query(query, [host, client, JSON.stringify(error)])
+            .then(() => resolve(null))
+            .catch((e: Error) =>
+            {
+                let errJSON = JSON.stringify(se(e),null,3);
+                console.log(errJSON);
+                reject(errJSON);
+            });
         });
     }
 

@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util = require("util");
 const pg = require("pg");
 const config = require("config");
+const se = require("serialize-error");
 class DBIO {
     constructor() {
         let dbparam = config.get("database");
@@ -95,17 +96,29 @@ class DBIO {
         const query = `insert into test_log(host, client, filename, md5sum, bytes)
         values($1, $2, $3, $4, $5)
         returning (select coalesce(sum(bytes), 0) from test_log)::bigint as total_bytes;`;
-        console.log(`inserting ${util.inspect(record)}`);
         return new Promise((resolve, reject) => {
             this.pool.query(query, record)
                 .then(r => {
                 let byteCount = r.rows[0]['total_bytes'];
                 resolve(byteCount);
             })
-                .catch(e => {
-                console.log(`error inserting ${query}\nwith values: ${util.inspect(record)}`);
-                console.log(`caught: ${util.inspect(e)}`);
-                reject(`nope`);
+                .catch((e) => {
+                let errJSON = JSON.stringify(se(e), null, 3);
+                console.log(errJSON);
+                reject(errJSON);
+            });
+        });
+    }
+    insertError(host, client, error) {
+        const query = `insert into error_log(host, client, error)
+        values($1, $2, $3)`;
+        return new Promise((resolve, reject) => {
+            this.pool.query(query, [host, client, JSON.stringify(error)])
+                .then(() => resolve(null))
+                .catch((e) => {
+                let errJSON = JSON.stringify(se(e), null, 3);
+                console.log(errJSON);
+                reject(errJSON);
             });
         });
     }
