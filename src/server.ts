@@ -105,14 +105,6 @@ class PhoebeServer
             }
             file.path = path.join(filePath, name);
         });
-
-        form.on('end', () =>
-        {
-            console.log(`this is the end`);
-        })
-
-
-
         form.parse(req, this.getParser(req, res));
     }
 
