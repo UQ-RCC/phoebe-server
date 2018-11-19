@@ -137,16 +137,20 @@ export class DBIO
         });
     }
 
-    public insertFileLink(fileLink: string, detail: string | null = null)
+    public insertFileLink(fileLink: string, detail: string | null = null): Promise<null>
     {
-        let insertFileReference: pg.QueryConfig = {
-            text: "select insert_file_link($1::text, $2::jsonb)",
-            values: [fileLink, detail]
-        }
+        return new Promise<null>((resolve, reject) =>
+        {
+            let insertFileReference: pg.QueryConfig = {
+                text: "select insert_file_link($1::text, $2::jsonb)",
+                values: [fileLink, detail]
+            }
+            
+            this.pool.query(insertFileReference)
+                .then(r => resolve(null))
+                .catch(e => reject(e));       
+        });
         
-        this.pool.query(insertFileReference)
-            .then(r => {console.log(util.inspect(r))})
-            .catch(e => console.log(`${e}`));       
     }
 
     public insertTestRecord(record: any[]): Promise<number>

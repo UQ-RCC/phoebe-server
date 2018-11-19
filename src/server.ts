@@ -123,9 +123,17 @@ class PhoebeServer
                 let fileLink = <string>fields.filePath;
                 let detail = <string>fields.detail;         
                 console.log(`register: ${fileLink}`);
-                db.insertFileLink(fileLink, detail);
-                res.writeHead(200, {'content-type': 'text/plain'});
-                res.end();
+                db.insertFileLink(fileLink, detail)
+                .then(() => 
+                {
+                    res.writeHead(200, {'content-type': 'text/plain'});
+                    res.end();
+                })
+                .catch(e =>
+                {
+                    res.writeHead(500, {'content-type': 'text/plain'});
+                    res.end();
+                });
             };
         }
         else if (url.startsWith('/register-test'))

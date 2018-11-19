@@ -84,13 +84,15 @@ class DBIO {
         });
     }
     insertFileLink(fileLink, detail = null) {
-        let insertFileReference = {
-            text: "select insert_file_link($1::text, $2::jsonb)",
-            values: [fileLink, detail]
-        };
-        this.pool.query(insertFileReference)
-            .then(r => { console.log(util.inspect(r)); })
-            .catch(e => console.log(`${e}`));
+        return new Promise((resolve, reject) => {
+            let insertFileReference = {
+                text: "select insert_file_link($1::text, $2::jsonb)",
+                values: [fileLink, detail]
+            };
+            this.pool.query(insertFileReference)
+                .then(r => resolve(null))
+                .catch(e => reject(e));
+        });
     }
     insertTestRecord(record) {
         const query = `insert into test_log(host, client, filename, md5sum, bytes)
